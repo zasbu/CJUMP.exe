@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
+using System.Diagnostics;
 
 
 namespace CJUMP
@@ -30,6 +31,7 @@ namespace CJUMP
         private System.Threading.Timer _focusTimer;
         private readonly int _autoTargetPid = 4876; // PID provided by user
         private readonly string[] _autoTitleKeywords = new[] { "Counter-Strike Source", "Direct3D 9" };
+        private readonly string[] _autoProcessNames = new[] { "cstrike_win64", "hl2" }; // process names to detect
         private bool _autoFocusEnabled = true; // set to false to disable auto-enable behavior
 
         [DllImport("user32.dll")]
@@ -197,26 +199,53 @@ namespace CJUMP
                     bool shouldEnable = false;
                     uint foundPid = 0;
 
-                    if ((int)pid == _autoTargetPid)
+                    // First: check process name(s) of the foreground window's process. This avoids relying on a constant PID.
+                    try
                     {
-                        shouldEnable = true;
-                        foundPid = pid;
-                    }
-                    else
-                    {
-                        int len = GetWindowTextLength(fg);
-                        if (len > 0)
+                        var proc = Process.GetProcessById((int)pid);
+                        if (proc != null)
                         {
-                            var sb = new System.Text.StringBuilder(len + 1);
-                            GetWindowText(fg, sb, sb.Capacity);
-                            var title = sb.ToString();
-                            foreach (var kw in _autoTitleKeywords)
+                            string pname = proc.ProcessName ?? string.Empty;
+                            foreach (var target in _autoProcessNames)
                             {
-                                if (!string.IsNullOrEmpty(kw) && title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                if (!string.IsNullOrEmpty(target) && string.Equals(pname, target, StringComparison.OrdinalIgnoreCase))
                                 {
                                     shouldEnable = true;
-                                    // do not set foundPid here (we only show PID when it matches)
+                                    foundPid = pid;
                                     break;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // ignore process lookup errors
+                    }
+
+                    // Fallback: if process name didn't match, try PID exact match (if user configured) or window title keywords
+                    if (!shouldEnable)
+                    {
+                        if ((int)pid == _autoTargetPid && _autoTargetPid != 0)
+                        {
+                            shouldEnable = true;
+                            foundPid = pid;
+                        }
+                        else
+                        {
+                            int len = GetWindowTextLength(fg);
+                            if (len > 0)
+                            {
+                                var sb = new System.Text.StringBuilder(len + 1);
+                                GetWindowText(fg, sb, sb.Capacity);
+                                var title = sb.ToString();
+                                foreach (var kw in _autoTitleKeywords)
+                                {
+                                    if (!string.IsNullOrEmpty(kw) && title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        shouldEnable = true;
+                                        // do not set foundPid here (we only show PID when it matches)
+                                        break;
+                                    }
                                 }
                             }
                         }
