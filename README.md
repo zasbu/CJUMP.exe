@@ -29,7 +29,7 @@ Because it behaves like a normal keyboard macro at the OS layer, it is **VAC saf
 ## Usage
 
 1. Launch CJUMP.exe  
-2. Set your jump key, duck key, and preferred delay  
+2. Set your jump key, duck key, and preferred delay (850ms is default - good for making it over most startzones) 
 3. Press **Update** to save  
 4. Open CS:S — the tool enables automatically when the game is focused  
 5. Hold your jump key and CJUMP handles the crouch timing  
