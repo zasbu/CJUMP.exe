@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
-using System.Diagnostics;
-
 
 namespace CJUMP
 {
@@ -17,22 +15,19 @@ namespace CJUMP
         private bool _enabled = false;
         private bool _isCrouchJumpRunning = false;
 
-        // state for preventing retriggers
         private readonly object _stateLock = new object();
         private HashSet<Keys> _currentlyDown = new HashSet<Keys>();
-        private bool _jumpHandled = false; // whether duck was already triggered for current jump press
+        private bool _jumpHandled = false;
         private bool _duckPressedByMacro = false;
 
-        // typing detection
         private DateTime _lastPrintableKey = DateTime.MinValue;
-        private readonly int _typingSuppressMs = 800; // suppress macro if printable key pressed within this time
+        private readonly int _typingSuppressMs = 800;
 
-        // foreground monitor fields
         private System.Threading.Timer _focusTimer;
-        private readonly int _autoTargetPid = 4876; // PID provided by user
+        private readonly int _autoTargetPid = 4876;
         private readonly string[] _autoTitleKeywords = new[] { "Counter-Strike Source", "Direct3D 9" };
-        private readonly string[] _autoProcessNames = new[] { "cstrike_win64", "hl2" }; // process names to detect
-        private bool _autoFocusEnabled = true; // set to false to disable auto-enable behavior
+        private readonly string[] _autoProcessNames = new[] { "cstrike_win64", "hl2" };
+        private bool _autoFocusEnabled = true;
 
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
@@ -40,7 +35,6 @@ namespace CJUMP
         [DllImport("user32.dll")]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
-        // PInvoke for foreground window detection
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
@@ -58,10 +52,8 @@ namespace CJUMP
         private const int EM_SETMARGINS = 0xD3;
         private const int EC_LEFTMARGIN = 0x1;
 
-        private string ConfigPath =>
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cjump.cfg");
+        private string ConfigPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cjump.cfg");
 
-        // active bind capture state
         private BindTextBox _activeBindBox;
         private string _activeBindPreviousText;
 
@@ -69,7 +61,6 @@ namespace CJUMP
         {
             InitializeComponent();
 
-            // load project resource favicon into title icon if present and render as circular bitmap
             try
             {
                 var bytes = CJUMP.Properties.Resources.favicon;
@@ -109,12 +100,10 @@ namespace CJUMP
 
             DoubleBuffered = true;
 
-            // fix textbox heights so text looks vertically centered
             FixBindBoxSize(txtJumpKey);
             FixBindBoxSize(txtDuckKey);
             FixDelayTextBoxHeight(txtDelay);
 
-            // bind capture behavior for bind boxes
             WireBindBoxes();
 
             SetStyle(
@@ -124,63 +113,48 @@ namespace CJUMP
                 true
             );
 
-            // flag special buttons so DarkButton paints them right
             btnClose.IsCloseButton = true;
             btnMinimize.IsMinimizeButton = true;
 
-            // title bar buttons
             btnClose.Click += (_, __) => Close();
             btnMinimize.Click += (_, __) => WindowState = FormWindowState.Minimized;
 
-            // drag from top bar
             panelTitle.MouseDown += TitleBar_MouseDown;
             lblTitle.MouseDown += TitleBar_MouseDown;
             lblStatus.MouseDown += TitleBar_MouseDown;
 
-            // drag from background areas as well
             panelMain.MouseDown += TitleBar_MouseDown;
             groupBinds.MouseDown += TitleBar_MouseDown;
             groupTiming.MouseDown += TitleBar_MouseDown;
 
-            // drag from labels
             lblJump.MouseDown += TitleBar_MouseDown;
             lblDuck.MouseDown += TitleBar_MouseDown;
             lblDelay.MouseDown += TitleBar_MouseDown;
 
-            // logic hooks
             btnUpdate.Click += BtnUpdate_Click;
 
-            // load config if it exists
             LoadConfig();
 
             UpdateStatus(false);
             PositionTitleButtons();
             PositionFoundLabel();
 
-            // start global keyboard hook for runtime hotkeys
             InputHook.KeyboardCaptured += GlobalKeyboardHandler;
-            InputHook.KeyboardReleased += GlobalKeyboardReleasedHandler; // ensure release handler is subscribed
+            InputHook.KeyboardReleased += GlobalKeyboardReleasedHandler;
             InputHook.StartKeyboardCapture();
 
-            // start focus monitor (auto-enable when target app is focused)
             StartFocusMonitor();
 
             this.Shown += (s, e) =>
             {
-                // no initial focus highlight
                 ActiveControl = null;
-
-                // left padding on delay textbox only
                 ApplyTextboxPadding(txtDelay);
-
-                // ensure found label positioned after initial show
                 PositionFoundLabel();
             };
         }
 
         private void StartFocusMonitor()
         {
-            // run every 500ms
             _focusTimer = new System.Threading.Timer(_ =>
             {
                 try
@@ -199,10 +173,9 @@ namespace CJUMP
                     bool shouldEnable = false;
                     uint foundPid = 0;
 
-                    // First: check process name(s) of the foreground window's process. This avoids relying on a constant PID.
                     try
                     {
-                        var proc = Process.GetProcessById((int)pid);
+                        var proc = System.Diagnostics.Process.GetProcessById((int)pid);
                         if (proc != null)
                         {
                             string pname = proc.ProcessName ?? string.Empty;
@@ -217,12 +190,8 @@ namespace CJUMP
                             }
                         }
                     }
-                    catch
-                    {
-                        // ignore process lookup errors
-                    }
+                    catch { }
 
-                    // Fallback: if process name didn't match, try PID exact match (if user configured) or window title keywords
                     if (!shouldEnable)
                     {
                         if ((int)pid == _autoTargetPid && _autoTargetPid != 0)
@@ -243,7 +212,6 @@ namespace CJUMP
                                     if (!string.IsNullOrEmpty(kw) && title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         shouldEnable = true;
-                                        // do not set foundPid here (we only show PID when it matches)
                                         break;
                                     }
                                 }
@@ -254,10 +222,7 @@ namespace CJUMP
                     SetAutoEnabled(shouldEnable);
                     UpdateFoundDisplay(foundPid != 0, foundPid);
                 }
-                catch
-                {
-                    // ignore errors from P/Invoke
-                }
+                catch { }
             }, null, 0, 500);
         }
 
@@ -267,9 +232,8 @@ namespace CJUMP
             {
                 if (lblFound == null) return;
 
-                // compact status message without timestamp
                 string text = found ? $"CS:S found [PID {pid}]" : "CS:S not active";
-                Color color = ThemeColors.Muted; // keep it subtle
+                Color color = ThemeColors.Muted;
 
                 if (lblFound.InvokeRequired)
                 {
@@ -291,24 +255,20 @@ namespace CJUMP
             {
                 if (lblFound == null || panelMain == null) return;
 
-                // ensure layout is measured
                 lblFound.AutoSize = true;
 
                 int left = (panelMain.ClientSize.Width - lblFound.Width) / 2;
                 if (left < 0) left = 0;
                 lblFound.Left = left;
 
-                // position vertically in the middle of the space between the update button and bottom of panelMain
                 if (btnUpdate != null)
                 {
                     int spaceTop = btnUpdate.Bottom;
                     int spaceBottom = panelMain.ClientSize.Height;
                     int available = Math.Max(0, spaceBottom - spaceTop);
 
-                    // center within available space, then nudge down by 5px
                     int top = spaceTop + Math.Max(0, (available - lblFound.Height) / 2) + 5;
 
-                    // prevent overflow
                     if (top + lblFound.Height > panelMain.ClientSize.Height)
                         top = Math.Max(0, panelMain.ClientSize.Height - lblFound.Height - 4);
 
@@ -316,7 +276,6 @@ namespace CJUMP
                 }
                 else
                 {
-                    // fallback: keep near bottom with small margin
                     int top = panelMain.ClientSize.Height - lblFound.Height - 8;
                     lblFound.Top = Math.Max(0, top);
                 }
@@ -338,8 +297,6 @@ namespace CJUMP
                 UpdateStatus(enable);
         }
 
-        // ===== BIND INPUT WIRING =====
-
         private void WireBindBoxes()
         {
             SetupBindBox(txtJumpKey);
@@ -353,7 +310,6 @@ namespace CJUMP
 
         private void StartBindCapture(BindTextBox box)
         {
-            // cancel any existing capture first
             CancelActiveBindCapture();
 
             _activeBindBox = box;
@@ -362,7 +318,6 @@ namespace CJUMP
             box.ForeColor = ThemeColors.Muted;
             box.Text = "<press a key>";
 
-            // subscribe capture handler ONLY, hook is already running globally
             InputHook.KeyboardCaptured += InputHookOnKeyboardCaptured;
         }
 
@@ -413,14 +368,12 @@ namespace CJUMP
             if (box == null)
                 return;
 
-            // if clicking a different box or no active capture: start capture
             if (_activeBindBox == null || _activeBindBox != box)
             {
                 StartBindCapture(box);
                 return;
             }
 
-            // same box already in capture: treat click as mouse bind
             string mouseName = MouseButtonToDisplayString(e.Button);
             if (mouseName != null)
             {
@@ -428,16 +381,12 @@ namespace CJUMP
             }
         }
 
-        // ===== GLOBAL HOTKEY HANDLER =====
-
         private void GlobalKeyboardReleasedHandler(Keys key)
         {
-            // remove from pressed set
             lock (_stateLock)
             {
                 _currentlyDown.Remove(key);
 
-                // if jump released, allow macro to trigger again next time
                 string jumpBindText = txtJumpKey.Text.Trim();
                 Keys? jumpKey = DisplayStringToKey(jumpBindText);
                 if (jumpKey.HasValue && key == jumpKey.Value)
@@ -449,32 +398,25 @@ namespace CJUMP
 
         private void GlobalKeyboardHandler(Keys key)
         {
-            // if we're capturing a bind, ignore hotkeys
             if (_activeBindBox != null)
                 return;
 
-            // only handle on transition: ignore autorepeat keydown events
             lock (_stateLock)
             {
                 if (_currentlyDown.Contains(key))
-                    return; // already down, ignore repeat
+                    return;
 
                 _currentlyDown.Add(key);
             }
 
-            // actual key pressed
             Keys pressedKey = key;
 
-            // read binds as display strings
             string jumpBindText = txtJumpKey.Text.Trim();
             string duckBindText = txtDuckKey.Text.Trim();
 
-            // convert binds -> Keys
             Keys? jumpKey = DisplayStringToKey(jumpBindText);
             Keys? duckKey = DisplayStringToKey(duckBindText);
 
-            // record printable key time for typing detection, but ignore the configured jump key so pressing jump doesn't mark typing
-            // Exclude WASD (movement) from marking typing; treat chat binds Y/U as typing triggers
             if ((!jumpKey.HasValue || key != jumpKey.Value))
             {
                 bool isChatKey = (key == Keys.Y || key == Keys.U);
@@ -484,34 +426,27 @@ namespace CJUMP
                 }
             }
 
-            // 1. If disabled, no crouch-jump logic
             if (!_enabled)
                 return;
 
-            // 2. Both jump and duck must convert properly
             if (!jumpKey.HasValue || !duckKey.HasValue)
                 return;
 
-            // typing suppression: if a printable key was pressed recently, assume user is typing in chat and skip macro
             if ((DateTime.UtcNow - _lastPrintableKey).TotalMilliseconds < _typingSuppressMs)
                 return;
 
-            // 3. If pressed key is NOT the jump bind, ignore
             if (pressedKey != jumpKey.Value)
                 return;
 
-            // 4. Parse delay
             int delayMs;
             if (!int.TryParse(txtDelay.Text.Trim(), out delayMs))
                 delayMs = 850;
 
             delayMs = Math.Max(0, Math.Min(2000, delayMs));
 
-            // 5. Prevent overlapping macros
             if (_isCrouchJumpRunning)
                 return;
 
-            // 6. Prevent re-trigger while holding jump
             lock (_stateLock)
             {
                 if (_jumpHandled)
@@ -521,15 +456,12 @@ namespace CJUMP
                 _isCrouchJumpRunning = true;
             }
 
-            // 7. Run crouch-jump macro with minimal delay to let jump register first
             Task.Run(() =>
             {
                 try
                 {
-                    // minimal delay to prioritize the real jump press
                     Thread.Sleep(1);
 
-                    // if user released jump before duck should be pressed, abort
                     lock (_stateLock)
                     {
                         if (!jumpKey.HasValue || !_currentlyDown.Contains(jumpKey.Value))
@@ -540,8 +472,6 @@ namespace CJUMP
                         }
                     }
 
-                    // SYNTHETIC JUMP FALLBACK: send a very short synthetic jump press just before duck
-                    // This reduces rare cases where the game's jump is missed. It is a quick down/up (5ms).
                     try
                     {
                         if (IsForegroundTarget())
@@ -551,43 +481,27 @@ namespace CJUMP
                             KeyboardSender.KeyUpScancodeOnly(jumpKey.Value);
                         }
                     }
-                    catch
-                    {
-                        // ignore if synthetic jump fails
-                    }
+                    catch { }
 
-                    // press duck
                     _duckPressedByMacro = true;
-                    Log($"Macro: Duck DOWN (key={duckKey.Value})");
                     KeyboardSender.KeyDown(duckKey.Value);
 
-                    // hold for configured delay
                     Thread.Sleep(delayMs);
 
-                    // release duck
-                    Log($"Macro: Duck UP (key={duckKey.Value})");
                     KeyboardSender.KeyUp(duckKey.Value);
                     _duckPressedByMacro = false;
                 }
                 finally
                 {
-                    // keep _jumpHandled true until jump released (handled in release handler)
                     _isCrouchJumpRunning = false;
                 }
             });
         }
 
-
-
         private void TogglePause()
         {
-            // keep UpdateStatus usage to reflect enabled state, but do not expose pause button in UI
             UpdateStatus(!_enabled);
-
-            // later: actually hook/unhook the crouch-jump behavior here if desired
         }
-
-        // ===== KEY / MOUSE NAME MAPPING =====
 
         private string KeyToDisplayString(Keys key)
         {
@@ -595,24 +509,18 @@ namespace CJUMP
             {
                 case Keys.Space:
                     return "SPACE";
-
-                // Control
                 case Keys.LControlKey:
                     return "LCTRL";
                 case Keys.RControlKey:
                     return "RCTRL";
                 case Keys.ControlKey:
                     return "CTRL";
-
-                // Shift
                 case Keys.LShiftKey:
                     return "LSHIFT";
                 case Keys.RShiftKey:
                     return "RSHIFT";
                 case Keys.ShiftKey:
                     return "SHIFT";
-
-                // Alt
                 case Keys.LMenu:
                     return "LALT";
                 case Keys.RMenu:
@@ -656,10 +564,8 @@ namespace CJUMP
 
             name = name.Trim();
 
-            // normalise for comparisons
             string upper = name.ToUpperInvariant();
 
-            // we do NOT handle mouse binds here – only keyboard
             if (upper.StartsWith("MOUSE"))
                 return null;
 
@@ -668,8 +574,6 @@ namespace CJUMP
                 case "SPACE":
                 case "SPACEBAR":
                     return Keys.Space;
-
-                // Control
                 case "LCTRL":
                 case "LEFT CONTROL":
                     return Keys.LControlKey;
@@ -679,8 +583,6 @@ namespace CJUMP
                 case "CTRL":
                 case "CONTROL":
                     return Keys.ControlKey;
-
-                // Shift
                 case "LSHIFT":
                 case "LEFT SHIFT":
                     return Keys.LShiftKey;
@@ -689,8 +591,6 @@ namespace CJUMP
                     return Keys.RShiftKey;
                 case "SHIFT":
                     return Keys.ShiftKey;
-
-                // Alt
                 case "LALT":
                 case "LEFT ALT":
                     return Keys.LMenu;
@@ -699,8 +599,6 @@ namespace CJUMP
                     return Keys.RMenu;
                 case "ALT":
                     return Keys.Menu;
-
-                // Pause keys that might be typed as words
                 case "ENTER":
                 case "RETURN":
                     return Keys.Enter;
@@ -710,43 +608,35 @@ namespace CJUMP
                     return Keys.Back;
             }
 
-            // top-row digits 0–9
             if (upper.Length == 1 && char.IsDigit(upper[0]))
             {
                 int digit = upper[0] - '0';
                 return (Keys)((int)Keys.D0 + digit);
             }
 
-            // NUMPAD0..NUMPAD9 (e.g. "NUMPAD3")
             if (upper.StartsWith("NUMPAD") && upper.Length == 7 && char.IsDigit(upper[6]))
             {
                 int digit = upper[6] - '0';
                 return (Keys)((int)Keys.NumPad0 + digit);
             }
 
-            // fall back to Keys enum names (F1, A, B, C, etc.)
             if (Enum.TryParse(name, true, out Keys parsed))
                 return parsed;
 
-            // unknown string
             return null;
         }
-
-
-
-        // ===== TEXTBOX / WINDOW BEHAVIOR =====
 
         private void FixBindBoxSize(BindTextBox box)
         {
             if (box == null) return;
-            box.Height = 21; // matches delay textbox visually
+            box.Height = 21;
         }
 
         private void FixDelayTextBoxHeight(TextBox tb)
         {
             if (tb == null) return;
             tb.AutoSize = false;
-            tb.Height = 18;   // your current value
+            tb.Height = 18;
         }
 
         private void ApplyTextboxPadding(Control c)
@@ -759,7 +649,6 @@ namespace CJUMP
         {
             if (e.Button == MouseButtons.Left)
             {
-                // clicking background cancels bind capture and drags the window
                 CancelActiveBindCapture();
 
                 ReleaseCapture();
@@ -816,8 +705,6 @@ namespace CJUMP
             PositionFoundLabel();
         }
 
-        // ===== STATUS / CONFIG =====
-
         private void UpdateStatus(bool enabled)
         {
             _enabled = enabled;
@@ -827,8 +714,6 @@ namespace CJUMP
 
         private void BtnUpdate_Click(object sender, EventArgs e)
         {
-            // just save config, do NOT enable here
-
             string jumpBind = txtJumpKey.Text.Trim();
             string duckBind = txtDuckKey.Text.Trim();
 
@@ -840,8 +725,6 @@ namespace CJUMP
             if (delayMs > 2000) delayMs = 2000;
 
             SaveConfig(jumpBind, duckBind, delayMs);
-
-            // no UpdateStatus(true) here anymore
         }
 
         private void SaveConfig(string jump, string duck, int delayMs)
@@ -857,10 +740,7 @@ namespace CJUMP
 
                 File.WriteAllLines(ConfigPath, lines);
             }
-            catch
-            {
-                // ignore file errors for now
-            }
+            catch { }
         }
 
         private void LoadConfig()
@@ -897,13 +777,8 @@ namespace CJUMP
                     }
                 }
             }
-            catch
-            {
-                // bad config; ignore and stick to defaults
-            }
+            catch { }
         }
-
-        // ===== BORDER PAINT =====
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -920,27 +795,21 @@ namespace CJUMP
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            // unsubscribe runtime and capture handlers and unhook
             InputHook.KeyboardCaptured -= GlobalKeyboardHandler;
             InputHook.KeyboardCaptured -= InputHookOnKeyboardCaptured;
             InputHook.KeyboardReleased -= GlobalKeyboardReleasedHandler;
 
             InputHook.StopKeyboardCapture();
 
-            // stop focus monitor
             try { _focusTimer?.Dispose(); } catch { }
 
             base.OnFormClosed(e);
         }
 
-        // helper: detect printable keys for typing suppression
         private bool IsPrintableKey(Keys k)
         {
-            // letters
             if (k >= Keys.A && k <= Keys.Z) return true;
-            // top row digits
             if (k >= Keys.D0 && k <= Keys.D9) return true;
-            // numpad digits
             if (k >= Keys.NumPad0 && k <= Keys.NumPad9) return true;
 
             switch (k)
@@ -969,16 +838,6 @@ namespace CJUMP
             return k == Keys.W || k == Keys.A || k == Keys.S || k == Keys.D;
         }
 
-        private void Log(string msg)
-        {
-            try
-            {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cjump.log");
-                File.AppendAllText(path, $"{DateTime.UtcNow:O} - {msg}\n");
-            }
-            catch { }
-        }
-
         private Bitmap CreateCircularBitmap(Bitmap src, int diameter)
         {
             try
@@ -986,7 +845,6 @@ namespace CJUMP
                 var dest = new Bitmap(diameter, diameter, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (var g = Graphics.FromImage(dest))
                 {
-                    // high-quality rendering to reduce jagged edges
                     g.CompositingMode = CompositingMode.SourceOver;
                     g.CompositingQuality = CompositingQuality.HighQuality;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -995,29 +853,25 @@ namespace CJUMP
 
                     g.Clear(Color.Transparent);
 
-                    // compute source rect to fit and center (preserve aspect and crop)
                     float srcAspect = (float)src.Width / src.Height;
-                    float dstAspect = 1.0f; // square
+                    float dstAspect = 1.0f;
 
                     RectangleF dstRect = new RectangleF(0, 0, diameter, diameter);
                     RectangleF srcRect;
 
                     if (srcAspect > dstAspect)
                     {
-                        // source is wider, crop horizontally
                         float srcW = src.Height * dstAspect;
                         float srcX = (src.Width - srcW) / 2f;
                         srcRect = new RectangleF(srcX, 0, srcW, src.Height);
                     }
                     else
                     {
-                        // source is taller or equal, crop vertically
                         float srcH = src.Width / dstAspect;
                         float srcY = (src.Height - srcH) / 2f;
                         srcRect = new RectangleF(0, srcY, src.Width, srcH);
                     }
 
-                    // draw image into circular clip
                     using (var path = new GraphicsPath())
                     {
                         path.AddEllipse(0, 0, diameter, diameter);
@@ -1027,7 +881,6 @@ namespace CJUMP
 
                         g.ResetClip();
 
-                        // subtle anti-aliased border to smooth edges
                         using (var pen = new Pen(Color.FromArgb(120, 0, 0, 0), 1f))
                         {
                             pen.Alignment = PenAlignment.Center;

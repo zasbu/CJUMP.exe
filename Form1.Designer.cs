@@ -9,7 +9,7 @@ namespace CJUMP
     {
         private IContainer components = null;
 
-        // Title bar
+        // Title bar controls
         private Panel panelTitle;
         private Label lblTitle;
         private Label lblStatus;
@@ -18,7 +18,7 @@ namespace CJUMP
         private DarkButton btnMinimize;
         private DarkButton btnClose;
 
-        // Main area
+        // Main area controls
         private Panel panelMain;
         private DarkGroupBox groupBinds;
         private DarkGroupBox groupTiming;
@@ -33,7 +33,7 @@ namespace CJUMP
         private Label lblDelay;
         private TextBox txtDelay;
 
-        // Bottom buttons
+        // Actions
         private DarkButton btnUpdate;
 
         protected override void Dispose(bool disposing)
@@ -70,9 +70,7 @@ namespace CJUMP
             groupTiming.SuspendLayout();
             ((ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
-            // 
-            // panelTitle
-            // 
+
             panelTitle.BackColor = Color.FromArgb(30, 30, 30);
             panelTitle.Controls.Add(picIcon);
             panelTitle.Controls.Add(btnClose);
@@ -85,18 +83,14 @@ namespace CJUMP
             panelTitle.Padding = new Padding(8, 4, 8, 4);
             panelTitle.Size = new Size(418, 28);
             panelTitle.TabIndex = 1;
-            // 
-            // picIcon
-            // 
+
             picIcon.Location = new Point(8, 6);
             picIcon.Name = "picIcon";
             picIcon.Size = new Size(18, 18);
             picIcon.SizeMode = PictureBoxSizeMode.CenterImage;
             picIcon.TabIndex = 5;
             picIcon.TabStop = false;
-            // 
-            // btnClose
-            // 
+
             btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnClose.BackColor = Color.FromArgb(30, 30, 30);
             btnClose.FlatStyle = FlatStyle.Flat;
@@ -108,9 +102,7 @@ namespace CJUMP
             btnClose.TabIndex = 0;
             btnClose.Text = "X";
             btnClose.UseVisualStyleBackColor = false;
-            // 
-            // btnMinimize
-            // 
+
             btnMinimize.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnMinimize.BackColor = Color.FromArgb(30, 30, 30);
             btnMinimize.FlatStyle = FlatStyle.Flat;
@@ -122,9 +114,7 @@ namespace CJUMP
             btnMinimize.TabIndex = 1;
             btnMinimize.Text = "_";
             btnMinimize.UseVisualStyleBackColor = false;
-            // 
-            // lblStatus
-            // 
+
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Tahoma", 8.25F, FontStyle.Bold);
             lblStatus.ForeColor = Color.FromArgb(200, 60, 60);
@@ -133,20 +123,17 @@ namespace CJUMP
             lblStatus.Size = new Size(64, 13);
             lblStatus.TabIndex = 2;
             lblStatus.Text = "[disabled]";
-            // 
-            // lblFound
-            // 
+
             lblFound.AutoSize = true;
-            lblFound.Font = new Font("Consolas", 7.5F);
+            lblFound.Font = new Font("Consolas", 8.25F); // use same clear UI font as rest of form
+            lblFound.UseCompatibleTextRendering = true; // enable GDI+ rendering for smoother text
             lblFound.ForeColor = Color.FromArgb(150, 150, 150);
             lblFound.Location = new Point(169, 166);
             lblFound.Name = "lblFound";
-            lblFound.Size = new Size(80, 12);
+            lblFound.Size = new Size(80, 14);
             lblFound.TabIndex = 4;
             lblFound.Text = "CS:S NOT ACTIVE";
-            // 
-            // lblTitle
-            // 
+
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Microsoft Sans Serif", 9F);
             lblTitle.ForeColor = Color.FromArgb(230, 230, 230);
@@ -155,9 +142,7 @@ namespace CJUMP
             lblTitle.Size = new Size(72, 15);
             lblTitle.TabIndex = 3;
             lblTitle.Text = "CJUMP.exe";
-            // 
-            // panelMain
-            // 
+
             panelMain.BackColor = Color.FromArgb(30, 30, 30);
             panelMain.Controls.Add(groupBinds);
             panelMain.Controls.Add(groupTiming);
@@ -169,9 +154,7 @@ namespace CJUMP
             panelMain.Padding = new Padding(8);
             panelMain.Size = new Size(418, 200);
             panelMain.TabIndex = 0;
-            // 
-            // groupBinds
-            // 
+
             groupBinds.BackColor = Color.FromArgb(30, 30, 30);
             groupBinds.Controls.Add(lblJump);
             groupBinds.Controls.Add(lblDuck);
@@ -184,9 +167,7 @@ namespace CJUMP
             groupBinds.TabIndex = 0;
             groupBinds.TabStop = false;
             groupBinds.Text = "binds";
-            // 
-            // lblJump
-            // 
+
             lblJump.AutoSize = true;
             lblJump.ForeColor = Color.FromArgb(150, 150, 150);
             lblJump.Location = new Point(20, 27);
@@ -194,9 +175,7 @@ namespace CJUMP
             lblJump.Size = new Size(58, 13);
             lblJump.TabIndex = 0;
             lblJump.Text = "+jump key";
-            // 
-            // lblDuck
-            // 
+
             lblDuck.AutoSize = true;
             lblDuck.ForeColor = Color.FromArgb(150, 150, 150);
             lblDuck.Location = new Point(20, 51);
@@ -204,9 +183,7 @@ namespace CJUMP
             lblDuck.Size = new Size(57, 13);
             lblDuck.TabIndex = 1;
             lblDuck.Text = "+duck key";
-            // 
-            // txtJumpKey
-            // 
+
             txtJumpKey.BackColor = Color.FromArgb(28, 28, 28);
             txtJumpKey.Font = new Font("Tahoma", 8.25F);
             txtJumpKey.ForeColor = Color.FromArgb(230, 230, 230);
@@ -215,9 +192,7 @@ namespace CJUMP
             txtJumpKey.Size = new Size(110, 21);
             txtJumpKey.TabIndex = 3;
             txtJumpKey.Text = "SPACE";
-            // 
-            // txtDuckKey
-            // 
+
             txtDuckKey.BackColor = Color.FromArgb(28, 28, 28);
             txtDuckKey.Font = new Font("Tahoma", 8.25F);
             txtDuckKey.ForeColor = Color.FromArgb(230, 230, 230);
@@ -226,9 +201,7 @@ namespace CJUMP
             txtDuckKey.Size = new Size(110, 21);
             txtDuckKey.TabIndex = 4;
             txtDuckKey.Text = "LCTRL";
-            // 
-            // groupTiming
-            // 
+
             groupTiming.BackColor = Color.FromArgb(30, 30, 30);
             groupTiming.Controls.Add(lblDelay);
             groupTiming.Controls.Add(txtDelay);
@@ -239,9 +212,7 @@ namespace CJUMP
             groupTiming.TabIndex = 1;
             groupTiming.TabStop = false;
             groupTiming.Text = "timing";
-            // 
-            // lblDelay
-            // 
+
             lblDelay.AutoSize = true;
             lblDelay.ForeColor = Color.FromArgb(150, 150, 150);
             lblDelay.Location = new Point(21, 27);
@@ -249,9 +220,7 @@ namespace CJUMP
             lblDelay.Size = new Size(58, 13);
             lblDelay.TabIndex = 0;
             lblDelay.Text = "Delay (ms)";
-            // 
-            // txtDelay
-            // 
+
             txtDelay.BackColor = Color.FromArgb(28, 28, 28);
             txtDelay.BorderStyle = BorderStyle.FixedSingle;
             txtDelay.Font = new Font("Tahoma", 9F);
@@ -261,9 +230,7 @@ namespace CJUMP
             txtDelay.Size = new Size(80, 22);
             txtDelay.TabIndex = 1;
             txtDelay.Text = "900";
-            // 
-            // btnUpdate
-            // 
+
             btnUpdate.BackColor = Color.FromArgb(30, 30, 30);
             btnUpdate.FlatStyle = FlatStyle.Flat;
             btnUpdate.Font = new Font("Tahoma", 8.25F);
@@ -274,17 +241,13 @@ namespace CJUMP
             btnUpdate.TabIndex = 2;
             btnUpdate.Text = "Update";
             btnUpdate.UseVisualStyleBackColor = false;
-            // 
-            // pictureBox1
-            // 
+
             pictureBox1.Location = new Point(263, 5);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(100, 50);
             pictureBox1.TabIndex = 5;
             pictureBox1.TabStop = false;
-            // 
-            // Form1
-            // 
+
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(22, 22, 22);
             ClientSize = new Size(420, 230);

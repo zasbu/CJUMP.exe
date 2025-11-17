@@ -67,7 +67,6 @@ namespace CJUMP
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        // legacy fallback
         [DllImport("user32.dll", SetLastError = true)]
         private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
@@ -81,7 +80,6 @@ namespace CJUMP
             uint fgThread = GetWindowThreadProcessId(fgWindow, out _);
             uint currentThread = GetCurrentThreadId();
 
-            // attach our thread to the foreground thread so input is routed similarly
             if (fgThread != currentThread)
             {
                 AttachThreadInput(currentThread, fgThread, true);
@@ -98,7 +96,6 @@ namespace CJUMP
             AttachThreadInput(currentThread, attachedThreadId, false);
         }
 
-        // Scancode-only down (no PostMessage/keybd_event fallback)
         public static void KeyDownScancodeOnly(Keys key)
         {
             uint sc = GetScanCode(key);
@@ -124,7 +121,6 @@ namespace CJUMP
             SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
         }
 
-        // Scancode-only up (no PostMessage/keybd_event fallback)
         public static void KeyUpScancodeOnly(Keys key)
         {
             uint sc = GetScanCode(key);
@@ -181,14 +177,12 @@ namespace CJUMP
                 Thread.Sleep(1);
                 SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
 
-                // Also post a window message to foreground window as a fallback
                 if (fg != IntPtr.Zero)
                 {
                     int lParam = BuildLParamForKeyDown((int)sc);
                     PostMessage(fg, WM_KEYDOWN, new IntPtr((int)vk), new IntPtr(lParam));
                 }
 
-                // Legacy fallback press (helps some games)
                 try
                 {
                     keybd_event((byte)vk, 0, 0, UIntPtr.Zero);
@@ -238,7 +232,6 @@ namespace CJUMP
                     PostMessage(fg, WM_KEYUP, new IntPtr((int)vk), new IntPtr(lParam));
                 }
 
-                // Legacy fallback release (helps some games that miss SendInput keyup)
                 try
                 {
                     keybd_event((byte)vk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
@@ -254,7 +247,7 @@ namespace CJUMP
         private static int BuildLParamForKeyDown(int scanCode)
         {
             int repeatCount = 1;
-            int extended = 0; // handled by extended flag in WM message sometimes
+            int extended = 0;
             int lParam = (repeatCount & 0xFFFF) | ((scanCode & 0xFF) << 16) | (extended << 24);
             return lParam;
         }
@@ -271,28 +264,24 @@ namespace CJUMP
 
         private static uint GetScanCode(Keys key)
         {
-            // Known explicit scan codes for common keys (set to BIOS/Set 1 scancodes as used by MapVirtualKey)
             switch (key)
             {
-                case Keys.LControlKey: return 0x1D; // Left Control
-                case Keys.RControlKey: return 0x1D; // Right Control uses same code with extended flag
-                case Keys.LShiftKey: return 0x2A; // Left Shift
-                case Keys.RShiftKey: return 0x36; // Right Shift
-                case Keys.LMenu: return 0x38; // Left Alt
-                case Keys.RMenu: return 0x38; // Right Alt uses same code with extended flag
+                case Keys.LControlKey: return 0x1D;
+                case Keys.RControlKey: return 0x1D;
+                case Keys.LShiftKey: return 0x2A;
+                case Keys.RShiftKey: return 0x36;
+                case Keys.LMenu: return 0x38;
+                case Keys.RMenu: return 0x38;
                 case Keys.Space: return 0x39;
                 case Keys.Enter: return 0x1C;
                 case Keys.Tab: return 0x0F;
                 case Keys.Back: return 0x0E;
-                // add other explicit mappings as needed
             }
 
-            // fallback to MapVirtualKey for other keys
             uint vk = (uint)key;
             uint sc = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
             if (sc == 0)
             {
-                // as a final fallback, return 0 (no-op) — caller will still attempt to send the input
                 return 0;
             }
 
@@ -303,9 +292,8 @@ namespace CJUMP
         {
             switch (key)
             {
-                // keys that require the extended bit
-                case Keys.RMenu:        // Right Alt
-                case Keys.RControlKey:  // Right Ctrl
+                case Keys.RMenu:
+                case Keys.RControlKey:
                 case Keys.Insert:
                 case Keys.Delete:
                 case Keys.Home:

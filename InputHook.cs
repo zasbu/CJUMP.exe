@@ -51,7 +51,6 @@ namespace CJUMP
 
                 var kbStruct = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
 
-                // ignore events that were injected by SendInput or other injection methods
                 const uint LLKHF_INJECTED = 0x10;
                 if ((kbStruct.flags & LLKHF_INJECTED) != 0)
                 {
@@ -72,8 +71,6 @@ namespace CJUMP
 
             return CallNextHookEx(_keyboardHookId, nCode, wParam, lParam);
         }
-
-        // ===== Interop =====
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 

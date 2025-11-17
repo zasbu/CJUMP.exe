@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.ComponentModel;
-
+using System.Drawing.Text;
 
 namespace CJUMP
 {
@@ -55,21 +55,11 @@ namespace CJUMP
             int textLeft = 12;
             int textTop = 5;
 
-            Rectangle textRect = new Rectangle(
-                textLeft,
-                textTop,
-                textSize.Width,
-                textSize.Height
-            );
+            Rectangle textRect = new Rectangle(textLeft, textTop, textSize.Width, textSize.Height);
 
             int lineY = textRect.Top + textRect.Height / 2;
 
-            Rectangle borderRect = new Rectangle(
-                5,
-                lineY,
-                Width - 10,
-                Height - lineY - 5
-            );
+            Rectangle borderRect = new Rectangle(5, lineY, Width - 10, Height - lineY - 5);
 
             using (var bg = new SolidBrush(ThemeColors.GroupBackground))
                 g.FillRectangle(bg, borderRect);
@@ -83,14 +73,7 @@ namespace CJUMP
                 g.FillRectangle(strip, stripRect);
             }
 
-            TextRenderer.DrawText(
-                g,
-                text,
-                font,
-                textRect,
-                ThemeColors.Muted,
-                TextFormatFlags.Left | TextFormatFlags.Top
-            );
+            TextRenderer.DrawText(g, text, font, textRect, ThemeColors.Muted, TextFormatFlags.Left | TextFormatFlags.Top);
         }
     }
 
@@ -185,14 +168,7 @@ namespace CJUMP
 
             if (text.Length == 1)
             {
-                // icon mode (single glyph)
-                Size textSize = TextRenderer.MeasureText(
-                    g,
-                    text,
-                    Font,
-                    r.Size,
-                    TextFormatFlags.NoPadding
-                );
+                Size textSize = TextRenderer.MeasureText(g, text, Font, r.Size, TextFormatFlags.NoPadding);
 
                 int tx = r.X + (r.Width - textSize.Width) / 2;
                 int ty = r.Y + (r.Height - textSize.Height) / 2;
@@ -202,47 +178,26 @@ namespace CJUMP
 
                 Rectangle textRect = new Rectangle(tx, ty, textSize.Width, textSize.Height);
 
-                TextRenderer.DrawText(
-                    g,
-                    text,
-                    Font,
-                    textRect,
-                    ThemeColors.Foreground,
-                    TextFormatFlags.NoPadding
-                );
+                TextRenderer.DrawText(g, text, Font, textRect, ThemeColors.Foreground, TextFormatFlags.NoPadding);
             }
             else
             {
-                // normal text
                 Rectangle textRect = new Rectangle(r.X, r.Y, r.Width, r.Height);
 
-                TextRenderer.DrawText(
-                    g,
-                    text,
-                    Font,
-                    textRect,
-                    ThemeColors.Foreground,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
-                );
+                TextRenderer.DrawText(g, text, Font, textRect, ThemeColors.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             }
         }
     }
 
-    // Custom, non-editable, non-selectable bind "textbox"
     public class BindTextBox : Control
     {
         public BindTextBox()
         {
-            SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.UserPaint |
-                ControlStyles.OptimizedDoubleBuffer,
-                true
-            );
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
 
             BackColor = ThemeColors.GroupBackground;
             ForeColor = ThemeColors.Foreground;
-            Font = new Font("Tahoma", 8.25f, FontStyle.Regular);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular);
 
             TabStop = true;
             Size = new Size(110, 21);
@@ -264,6 +219,7 @@ namespace CJUMP
 
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.None;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
             Rectangle r = ClientRectangle;
 
@@ -273,16 +229,13 @@ namespace CJUMP
             using (var p = new Pen(ThemeColors.Border))
                 g.DrawRectangle(p, 0, 0, r.Width - 1, r.Height - 1);
 
-            Rectangle textRect = new Rectangle(4, 0, r.Width - 8, r.Height);
+            RectangleF textRect = new RectangleF(4, 0, r.Width - 8, r.Height);
 
-            TextRenderer.DrawText(
-                g,
-                Text ?? string.Empty,
-                Font,
-                textRect,
-                ForeColor,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter
-            );
+            using (var b = new SolidBrush(ForeColor))
+            {
+                var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
+                g.DrawString(Text ?? string.Empty, Font, b, textRect, sf);
+            }
         }
 
         protected override void OnGotFocus(EventArgs e)
@@ -333,21 +286,9 @@ namespace CJUMP
                 }
             }
 
-            Rectangle textRect = new Rectangle(
-                boxRect.Right + 6,
-                0,
-                Width - boxRect.Right - 6,
-                Height
-            );
+            Rectangle textRect = new Rectangle(boxRect.Right + 6, 0, Width - boxRect.Right - 6, Height);
 
-            TextRenderer.DrawText(
-                e.Graphics,
-                Text,
-                Font,
-                textRect,
-                ThemeColors.Foreground,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter
-            );
+            TextRenderer.DrawText(e.Graphics, Text, Font, textRect, ThemeColors.Foreground, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
         }
     }
 
@@ -376,14 +317,7 @@ namespace CJUMP
 
             string text = GetItemText(Items[e.Index]);
 
-            TextRenderer.DrawText(
-                e.Graphics,
-                text,
-                Font,
-                e.Bounds,
-                ThemeColors.Foreground,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter
-            );
+            TextRenderer.DrawText(e.Graphics, text, Font, e.Bounds, ThemeColors.Foreground, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
         }
     }
 }
