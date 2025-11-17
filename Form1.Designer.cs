@@ -13,6 +13,8 @@ namespace CJUMP
         private Panel panelTitle;
         private Label lblTitle;
         private Label lblStatus;
+        private Label lblFound;
+        private PictureBox picIcon;
         private DarkButton btnMinimize;
         private DarkButton btnClose;
 
@@ -24,10 +26,8 @@ namespace CJUMP
         // Binds controls
         private Label lblJump;
         private Label lblDuck;
-        private Label lblPause;
         private BindTextBox txtJumpKey;
         private BindTextBox txtDuckKey;
-        private BindTextBox txtPauseKey;
 
         // Timing controls
         private Label lblDelay;
@@ -35,7 +35,6 @@ namespace CJUMP
 
         // Bottom buttons
         private DarkButton btnUpdate;
-        private DarkButton btnPause;   // new pause/play button
 
         protected override void Dispose(bool disposing)
         {
@@ -47,32 +46,35 @@ namespace CJUMP
         private void InitializeComponent()
         {
             panelTitle = new Panel();
+            picIcon = new PictureBox();
             btnClose = new DarkButton();
             btnMinimize = new DarkButton();
             lblStatus = new Label();
+            lblFound = new Label();
             lblTitle = new Label();
             panelMain = new Panel();
             groupBinds = new DarkGroupBox();
             lblJump = new Label();
             lblDuck = new Label();
-            lblPause = new Label();
             txtJumpKey = new BindTextBox();
             txtDuckKey = new BindTextBox();
-            txtPauseKey = new BindTextBox();
             groupTiming = new DarkGroupBox();
             lblDelay = new Label();
             txtDelay = new TextBox();
             btnUpdate = new DarkButton();
-            btnPause = new DarkButton();
+            pictureBox1 = new PictureBox();
             panelTitle.SuspendLayout();
+            ((ISupportInitialize)picIcon).BeginInit();
             panelMain.SuspendLayout();
             groupBinds.SuspendLayout();
             groupTiming.SuspendLayout();
+            ((ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
             // panelTitle
             // 
             panelTitle.BackColor = Color.FromArgb(30, 30, 30);
+            panelTitle.Controls.Add(picIcon);
             panelTitle.Controls.Add(btnClose);
             panelTitle.Controls.Add(btnMinimize);
             panelTitle.Controls.Add(lblStatus);
@@ -84,6 +86,15 @@ namespace CJUMP
             panelTitle.Size = new Size(418, 28);
             panelTitle.TabIndex = 1;
             // 
+            // picIcon
+            // 
+            picIcon.Location = new Point(8, 6);
+            picIcon.Name = "picIcon";
+            picIcon.Size = new Size(18, 18);
+            picIcon.SizeMode = PictureBoxSizeMode.CenterImage;
+            picIcon.TabIndex = 5;
+            picIcon.TabStop = false;
+            // 
             // btnClose
             // 
             btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -91,8 +102,6 @@ namespace CJUMP
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Tahoma", 8.25F);
             btnClose.ForeColor = Color.FromArgb(230, 230, 230);
-            btnClose.IsCloseButton = false;
-            btnClose.IsMinimizeButton = false;
             btnClose.Location = new Point(387, 4);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(26, 18);
@@ -107,8 +116,6 @@ namespace CJUMP
             btnMinimize.FlatStyle = FlatStyle.Flat;
             btnMinimize.Font = new Font("Tahoma", 8.25F);
             btnMinimize.ForeColor = Color.FromArgb(230, 230, 230);
-            btnMinimize.IsCloseButton = false;
-            btnMinimize.IsMinimizeButton = false;
             btnMinimize.Location = new Point(358, 4);
             btnMinimize.Name = "btnMinimize";
             btnMinimize.Size = new Size(26, 18);
@@ -121,19 +128,31 @@ namespace CJUMP
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Tahoma", 8.25F, FontStyle.Bold);
             lblStatus.ForeColor = Color.FromArgb(200, 60, 60);
-            lblStatus.Location = new Point(68, 7);
+            lblStatus.Location = new Point(104, 8);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(63, 13);
+            lblStatus.Size = new Size(64, 13);
             lblStatus.TabIndex = 2;
             lblStatus.Text = "[disabled]";
+            // 
+            // lblFound
+            // 
+            lblFound.AutoSize = true;
+            lblFound.Font = new Font("Consolas", 7.5F);
+            lblFound.ForeColor = Color.FromArgb(150, 150, 150);
+            lblFound.Location = new Point(169, 166);
+            lblFound.Name = "lblFound";
+            lblFound.Size = new Size(80, 12);
+            lblFound.TabIndex = 4;
+            lblFound.Text = "CS:S NOT ACTIVE";
             // 
             // lblTitle
             // 
             lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Microsoft Sans Serif", 9F);
             lblTitle.ForeColor = Color.FromArgb(230, 230, 230);
-            lblTitle.Location = new Point(8, 7);
+            lblTitle.Location = new Point(30, 7);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(62, 13);
+            lblTitle.Size = new Size(72, 15);
             lblTitle.TabIndex = 3;
             lblTitle.Text = "CJUMP.exe";
             // 
@@ -143,7 +162,7 @@ namespace CJUMP
             panelMain.Controls.Add(groupBinds);
             panelMain.Controls.Add(groupTiming);
             panelMain.Controls.Add(btnUpdate);
-            panelMain.Controls.Add(btnPause);
+            panelMain.Controls.Add(lblFound);
             panelMain.Dock = DockStyle.Fill;
             panelMain.Location = new Point(1, 29);
             panelMain.Name = "panelMain";
@@ -156,14 +175,12 @@ namespace CJUMP
             groupBinds.BackColor = Color.FromArgb(30, 30, 30);
             groupBinds.Controls.Add(lblJump);
             groupBinds.Controls.Add(lblDuck);
-            groupBinds.Controls.Add(lblPause);
             groupBinds.Controls.Add(txtJumpKey);
             groupBinds.Controls.Add(txtDuckKey);
-            groupBinds.Controls.Add(txtPauseKey);
             groupBinds.ForeColor = Color.FromArgb(150, 150, 150);
             groupBinds.Location = new Point(10, 18);
             groupBinds.Name = "groupBinds";
-            groupBinds.Size = new Size(260, 110);
+            groupBinds.Size = new Size(260, 83);
             groupBinds.TabIndex = 0;
             groupBinds.TabStop = false;
             groupBinds.Text = "binds";
@@ -188,16 +205,6 @@ namespace CJUMP
             lblDuck.TabIndex = 1;
             lblDuck.Text = "+duck key";
             // 
-            // lblPause
-            // 
-            lblPause.AutoSize = true;
-            lblPause.ForeColor = Color.FromArgb(150, 150, 150);
-            lblPause.Location = new Point(21, 75);
-            lblPause.Name = "lblPause";
-            lblPause.Size = new Size(56, 13);
-            lblPause.TabIndex = 2;
-            lblPause.Text = "pause key";
-            // 
             // txtJumpKey
             // 
             txtJumpKey.BackColor = Color.FromArgb(28, 28, 28);
@@ -218,18 +225,7 @@ namespace CJUMP
             txtDuckKey.Name = "txtDuckKey";
             txtDuckKey.Size = new Size(110, 21);
             txtDuckKey.TabIndex = 4;
-            txtDuckKey.Text = "CTRL";
-            // 
-            // txtPauseKey
-            // 
-            txtPauseKey.BackColor = Color.FromArgb(28, 28, 28);
-            txtPauseKey.Font = new Font("Tahoma", 8.25F);
-            txtPauseKey.ForeColor = Color.FromArgb(230, 230, 230);
-            txtPauseKey.Location = new Point(110, 71);
-            txtPauseKey.Name = "txtPauseKey";
-            txtPauseKey.Size = new Size(110, 21);
-            txtPauseKey.TabIndex = 5;
-            txtPauseKey.Text = "F8";
+            txtDuckKey.Text = "LCTRL";
             // 
             // groupTiming
             // 
@@ -239,7 +235,7 @@ namespace CJUMP
             groupTiming.ForeColor = Color.FromArgb(150, 150, 150);
             groupTiming.Location = new Point(280, 18);
             groupTiming.Name = "groupTiming";
-            groupTiming.Size = new Size(120, 110);
+            groupTiming.Size = new Size(120, 83);
             groupTiming.TabIndex = 1;
             groupTiming.TabStop = false;
             groupTiming.Text = "timing";
@@ -248,7 +244,7 @@ namespace CJUMP
             // 
             lblDelay.AutoSize = true;
             lblDelay.ForeColor = Color.FromArgb(150, 150, 150);
-            lblDelay.Location = new Point(21, 35);
+            lblDelay.Location = new Point(21, 27);
             lblDelay.Name = "lblDelay";
             lblDelay.Size = new Size(58, 13);
             lblDelay.TabIndex = 0;
@@ -258,13 +254,13 @@ namespace CJUMP
             // 
             txtDelay.BackColor = Color.FromArgb(28, 28, 28);
             txtDelay.BorderStyle = BorderStyle.FixedSingle;
-            txtDelay.Font = new Font("Tahoma", 9f, FontStyle.Regular);
+            txtDelay.Font = new Font("Tahoma", 9F);
             txtDelay.ForeColor = Color.FromArgb(230, 230, 230);
-            txtDelay.Location = new Point(21, 53);
+            txtDelay.Location = new Point(21, 45);
             txtDelay.Name = "txtDelay";
-            txtDelay.Size = new Size(80, 21);
+            txtDelay.Size = new Size(80, 22);
             txtDelay.TabIndex = 1;
-            txtDelay.Text = "850";
+            txtDelay.Text = "900";
             // 
             // btnUpdate
             // 
@@ -272,29 +268,20 @@ namespace CJUMP
             btnUpdate.FlatStyle = FlatStyle.Flat;
             btnUpdate.Font = new Font("Tahoma", 8.25F);
             btnUpdate.ForeColor = Color.FromArgb(230, 230, 230);
-            btnUpdate.IsCloseButton = false;
-            btnUpdate.IsMinimizeButton = false;
-            btnUpdate.Location = new Point(109, 151);
+            btnUpdate.Location = new Point(109, 123);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(200, 24);
             btnUpdate.TabIndex = 2;
             btnUpdate.Text = "Update";
             btnUpdate.UseVisualStyleBackColor = false;
             // 
-            // btnPause
+            // pictureBox1
             // 
-            btnPause.BackColor = Color.FromArgb(30, 30, 30);
-            btnPause.FlatStyle = FlatStyle.Flat;
-            btnPause.Font = new Font("Segoe UI Symbol", 10.0f, FontStyle.Bold);
-            btnPause.ForeColor = Color.FromArgb(150, 150, 150);
-            btnPause.IsCloseButton = false;
-            btnPause.IsMinimizeButton = false;
-            btnPause.Location = new Point(317, 151);
-            btnPause.Name = "btnPause";
-            btnPause.Size = new Size(24, 24);
-            btnPause.TabIndex = 3;
-            btnPause.Text = "▶";
-            btnPause.UseVisualStyleBackColor = false;
+            pictureBox1.Location = new Point(263, 5);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(100, 50);
+            pictureBox1.TabIndex = 5;
+            pictureBox1.TabStop = false;
             // 
             // Form1
             // 
@@ -311,11 +298,17 @@ namespace CJUMP
             StartPosition = FormStartPosition.CenterScreen;
             panelTitle.ResumeLayout(false);
             panelTitle.PerformLayout();
+            ((ISupportInitialize)picIcon).EndInit();
             panelMain.ResumeLayout(false);
+            panelMain.PerformLayout();
             groupBinds.ResumeLayout(false);
+            groupBinds.PerformLayout();
             groupTiming.ResumeLayout(false);
             groupTiming.PerformLayout();
+            ((ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
         }
+
+        private PictureBox pictureBox1;
     }
 }

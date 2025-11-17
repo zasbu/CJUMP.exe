@@ -9,12 +9,17 @@ namespace CJUMP
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_SYSKEYDOWN = 0x0104;
+        private const int WM_KEYUP = 0x0101;
+        private const int WM_SYSKEYUP = 0x0105;
 
         private static IntPtr _keyboardHookId = IntPtr.Zero;
         private static LowLevelKeyboardProc _keyboardProc = KeyboardHookCallback;
 
         public delegate void KeyboardCapturedHandler(Keys key);
         public static event KeyboardCapturedHandler KeyboardCaptured;
+
+        public delegate void KeyboardReleasedHandler(Keys key);
+        public static event KeyboardReleasedHandler KeyboardReleased;
 
         public static void StartKeyboardCapture()
         {
@@ -44,14 +49,24 @@ namespace CJUMP
             {
                 int msg = wParam.ToInt32();
 
+                var kbStruct = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
+
+                // ignore events that were injected by SendInput or other injection methods
+                const uint LLKHF_INJECTED = 0x10;
+                if ((kbStruct.flags & LLKHF_INJECTED) != 0)
+                {
+                    return CallNextHookEx(_keyboardHookId, nCode, wParam, lParam);
+                }
+
                 if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN)
                 {
-                    var kbStruct = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
                     Keys key = (Keys)kbStruct.vkCode;
-
                     KeyboardCaptured?.Invoke(key);
-                    // we let the key pass through normally:
-                    // return (IntPtr)1; // would swallow it
+                }
+                else if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
+                {
+                    Keys key = (Keys)kbStruct.vkCode;
+                    KeyboardReleased?.Invoke(key);
                 }
             }
 
