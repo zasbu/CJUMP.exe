@@ -3,7 +3,7 @@
 CJUMP.exe is a small utility that automates crouch-jumping in Counter-Strike: Source.  
 You hold your jump key, and the program handles pressing and releasing duck for you with a consistent delay. It only activates when CS:S is focused and it backs off while you're typing or tabbed out.
 
-This is for players who want to crouch-jump while still holding space (or any custom jump key) without having to bind crouch to the jump key.
+This is for players who want to crouch-jump while still holding space (or any custom jump key) without having to bind crouch-jump to another key.
 
 ## Features
 
