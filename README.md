@@ -36,6 +36,7 @@ Because it behaves like a normal keyboard macro at the OS layer, it is **VAC saf
 
 **Important:** Your in-game jump key (usually SPACE) must be bound to `+jump`.  
 You can confirm with:
+
 bind space +jump
 
 
